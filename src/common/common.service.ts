@@ -29,7 +29,18 @@ export class CommonService {
     dto: BasePaginationDto,
     repository: Repository<T>,
     overrideFindOptions: FindManyOptions<T> = {},
-  ) {}
+  ) {
+    const findOptions = this.composeFindOptions<T>(dto);
+
+    const [data, count] = await repository.findAndCount({
+      ...findOptions,
+      ...overrideFindOptions,
+    });
+    return {
+      data,
+      total: count,
+    };
+  }
 
   private async cursorPaginate<T extends BaseModel>(
     dto: BasePaginationDto,
@@ -49,7 +60,7 @@ export class CommonService {
         ? results[results.length - 1]
         : null;
 
-    const nextUrl = lastItem && new URL(`${PROTOCOL}://${HOST}/posts`);
+    const nextUrl = lastItem && new URL(`${PROTOCOL}://${HOST}/${path}`);
 
     if (nextUrl) {
       /**
@@ -128,7 +139,11 @@ export class CommonService {
       // operator -> more_than
       // filter_mapper[operator] -> MoreThan
 
-      options[field] = FILTER_MAPPER[operator](value);
+      if (operator === 'i_like') {
+        options[field] = FILTER_MAPPER[operator](`%${value}%`);
+      } else {
+        options[field] = FILTER_MAPPER[operator](value);
+      }
     }
     // where__id__between = 3,4
     // 만약에 split 대상 문자가 존재하지 않으면 길이가 무조건 1이다.
