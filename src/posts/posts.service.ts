@@ -1,3 +1,4 @@
+import { CommonService } from './../common/common.service';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { FindOptionsWhere, LessThan, MoreThan, Repository } from 'typeorm';
 import { PostsModel } from './entities/posts.entity';
@@ -22,6 +23,7 @@ export class PostsService {
   constructor(
     @InjectRepository(PostsModel)
     private readonly postsRepository: Repository<PostsModel>,
+    private readonly commonService: CommonService,
   ) {}
 
   async getAllPosts() {
@@ -40,11 +42,12 @@ export class PostsService {
   }
 
   async paginatePosts(dto: PaginatePostDto) {
-    if (dto.page) {
-      return this.pagePaginatePosts(dto);
-    } else {
-      return this.cursorPaginatePosts(dto);
-    }
+    return this.commonService.pagenate(dto, this.postsRepository, {}, 'posts');
+    // if (dto.page) {
+    //   return this.pagePaginatePosts(dto);
+    // } else {
+    //   return this.cursorPaginatePosts(dto);
+    // }
   }
 
   async pagePaginatePosts(dto: PaginatePostDto) {
