@@ -62,7 +62,7 @@ export class PostsController {
    */
   @Post()
   @UseGuards(AccessTokenGuard)
-  @UseInterceptors(FileInterceptor('image'))
+  // @UseInterceptors(FileInterceptor('image'))
   postPost(
     // @Request() req: any, //User decorator를 사용하므로 더 이상 필요없다
     @User('id') userId: number,
@@ -73,10 +73,10 @@ export class PostsController {
     // @Body('title') title: string,
     // @Body('content') content: string,
     // @Body('isPublic', new DefaultValuePipe(true)) isPublic: boolean, // DefaultValue연습용
-    @UploadedFile() file?: Express.Multer.File,
+    // @UploadedFile() file?: Express.Multer.File,
   ) {
     // const authorId = req.user.id;
-    return this.postsService.createPost(userId, body, file?.filename);
+    return this.postsService.createPost(userId, body);
     // return this.postsService.createPost(title, authorId, content);
   }
   /**
