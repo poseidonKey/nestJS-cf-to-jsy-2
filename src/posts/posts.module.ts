@@ -13,6 +13,7 @@ import { extname } from 'path/posix';
 
 import { POST_IMAGE_PATH } from 'src/common/const/path.const';
 import { ImageModel } from 'src/common/entity/image.entity';
+import { PostsImagesService } from './image/images.service';
 
 @Module({
   imports: [
@@ -20,6 +21,12 @@ import { ImageModel } from 'src/common/entity/image.entity';
     CommonModule,
   ],
   controllers: [PostsController],
-  providers: [PostsService, JwtService, AuthService, UsersService],
+  providers: [
+    PostsService,
+    JwtService,
+    AuthService,
+    UsersService,
+    PostsImagesService,
+  ],
 })
 export class PostsModule {}

@@ -26,12 +26,14 @@ import { UsersModel } from 'src/users/entites/users.entity';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ImageModelType } from 'src/common/entity/image.entity';
 import { DataSource } from 'typeorm';
+import { PostsImagesService } from './image/images.service';
 // import { UsersModel } from 'src/users/entites/users.entity';
 
 @Controller('posts')
 export class PostsController {
   constructor(
     private readonly postsService: PostsService,
+    private readonly postsImagesService: PostsImagesService,
     private readonly dataSource: DataSource,
   ) {}
   /**
@@ -87,15 +89,21 @@ export class PostsController {
     await qr.startTransaction();
 
     try {
-      const post = await this.postsService.createPost(userId, body);
+      const post = await this.postsService.createPost(userId, body, qr);
+
+      // 아래는 테스트 용 - 디비에 저장하지 않는다. transation에 의해.
+      // throw new InternalServerErrorException('error 가 났습니다.');
 
       for (let i = 0; i < body.images.length; i++) {
-        await this.postsService.createPostImage({
-          post,
-          order: i,
-          path: body.images[i],
-          type: ImageModelType.POST_IMAGE,
-        });
+        await this.postsImagesService.createPostImage(
+          {
+            post,
+            order: i,
+            path: body.images[i],
+            type: ImageModelType.POST_IMAGE,
+          },
+          qr,
+        );
       }
 
       await qr.commitTransaction();

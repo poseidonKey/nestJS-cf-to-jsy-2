@@ -69,6 +69,29 @@ export class PostsService {
     }
   }
 
+  async createPost(
+    authorId: number,
+    postDto: CreatePostDto,
+    qr?: QueryRunner,
+  ): Promise<PostsModel> {
+    const repository = this.getRepository(qr);
+
+    const post = repository.create({
+      author: {
+        id: authorId,
+      },
+      ...postDto,
+      images: [],
+      title: postDto.title,
+      likeCount: 0,
+      commentCount: 0,
+    });
+
+    const newPost = await repository.save(post);
+
+    return newPost;
+  }
+
   async paginatePosts(dto: PaginatePostDto) {
     return this.commonService.pagenate(
       dto,
@@ -170,45 +193,6 @@ export class PostsService {
     return qr
       ? qr.manager.getRepository<PostsModel>(PostsModel)
       : this.postsRepository;
-  }
-
-  async createPost(authorId: number, postDto: CreatePostDto, qr?: QueryRunner) {
-    const repository = this.getRepository(qr);
-
-    const post = repository.create({
-      author: {
-        id: authorId,
-      },
-      ...postDto,
-      images: [],
-      likeCount: 0,
-      commentCount: 0,
-    });
-
-    const newPost = await repository.save(post);
-
-    return newPost;
-  }
-
-  async createPostImage(dto: CreatePostImageDto) {
-    const tempFilePath = join(TEMP_FOLDER_PATH, dto.path);
-
-    try {
-      await promises.access(tempFilePath);
-    } catch (error) {
-      throw new BadRequestException('존재하지 않는 파일');
-    }
-
-    const fileName = basename(tempFilePath);
-
-    const newPath = join(POST_IMAGE_PATH, fileName);
-
-    const result = await this.imageRepository.save({
-      ...dto,
-    });
-    await promises.rename(tempFilePath, newPath);
-
-    return result;
   }
 
   async updatePost(postId: number, postDto: UpdatePostDto) {
