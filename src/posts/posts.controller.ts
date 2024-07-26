@@ -63,7 +63,7 @@ export class PostsController {
   @Post()
   @UseGuards(AccessTokenGuard)
   // @UseInterceptors(FileInterceptor('image'))
-  postPost(
+  async postPost(
     // @Request() req: any, //User decorator를 사용하므로 더 이상 필요없다
     @User('id') userId: number,
     // @User() user: UsersModel,
@@ -75,6 +75,7 @@ export class PostsController {
     // @Body('isPublic', new DefaultValuePipe(true)) isPublic: boolean, // DefaultValue연습용
     // @UploadedFile() file?: Express.Multer.File,
   ) {
+    await this.postsService.createPostImage(body);
     // const authorId = req.user.id;
     return this.postsService.createPost(userId, body);
     // return this.postsService.createPost(title, authorId, content);

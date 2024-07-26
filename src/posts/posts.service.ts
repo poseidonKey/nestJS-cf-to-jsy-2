@@ -1,5 +1,9 @@
 import { CommonService } from './../common/common.service';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { FindOptionsWhere, LessThan, MoreThan, Repository } from 'typeorm';
 import { PostsModel } from './entities/posts.entity';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -12,6 +16,13 @@ import {
   ENV_HOST_KEY,
   ENV_PROTOCOL_KEY,
 } from 'src/common/const/env-keys.const';
+import { basename, join } from 'path';
+import {
+  POST_IMAGE_PATH,
+  PUBLIC_FOLDER_PATH,
+  TEMP_FOLDER_PATH,
+} from 'src/common/const/path.const';
+import { promises } from 'fs';
 
 export interface PostModel {
   id: number;
@@ -155,6 +166,23 @@ export class PostsService {
     const newPost = await this.postsRepository.save(post);
 
     return newPost;
+  }
+
+  async createPostImage(dto: CreatePostDto) {
+    const tempFilePath = join(TEMP_FOLDER_PATH, dto.image);
+
+    try {
+      await promises.access(tempFilePath);
+    } catch (error) {
+      throw new BadRequestException('존재하지 않는 파일');
+    }
+
+    const fileName = basename(tempFilePath);
+
+    const newPath = join(POST_IMAGE_PATH, fileName);
+    await promises.rename(tempFilePath, newPath);
+
+    return true;
   }
 
   async updatePost(postId: number, postDto: UpdatePostDto) {
