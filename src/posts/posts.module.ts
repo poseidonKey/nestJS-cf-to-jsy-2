@@ -12,9 +12,13 @@ import { CommonModule } from 'src/common/common.module';
 import { extname } from 'path/posix';
 
 import { POST_IMAGE_PATH } from 'src/common/const/path.const';
+import { ImageModel } from 'src/common/entity/image.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([PostsModel, UsersModel]), CommonModule],
+  imports: [
+    TypeOrmModule.forFeature([PostsModel, UsersModel, ImageModel]),
+    CommonModule,
+  ],
   controllers: [PostsController],
   providers: [PostsService, JwtService, AuthService, UsersService],
 })

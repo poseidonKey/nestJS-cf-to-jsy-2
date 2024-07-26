@@ -1,6 +1,6 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { RolesEnum } from '../const/roles.const';
-import { PostModel } from 'src/posts/posts.service';
+// import { PostModel } from 'src/posts/posts.service';
 import { PostsModel } from 'src/posts/entities/posts.entity';
 import { BaseModel } from 'src/common/entity/base.entity';
 import { IsEmail, isEmail, IsString, Length } from 'class-validator';
@@ -61,5 +61,5 @@ export class UsersModel extends BaseModel {
   role: RolesEnum;
 
   @OneToMany(() => PostsModel, (post) => post.author)
-  posts: PostModel[];
+  posts: PostsModel[];
 }

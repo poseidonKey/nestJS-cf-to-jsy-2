@@ -23,6 +23,7 @@ import { UpdatePostDto } from './dto/update-post.dto';
 import { PaginatePostDto } from './dto/paginate_post.dto';
 import { UsersModel } from 'src/users/entites/users.entity';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { ImageModelType } from 'src/common/entity/image.entity';
 // import { UsersModel } from 'src/users/entites/users.entity';
 
 @Controller('posts')
@@ -75,11 +76,23 @@ export class PostsController {
     // @Body('isPublic', new DefaultValuePipe(true)) isPublic: boolean, // DefaultValue연습용
     // @UploadedFile() file?: Express.Multer.File,
   ) {
-    await this.postsService.createPostImage(body);
+    const post = await this.postsService.createPost(userId, body);
+
+    for (let i = 0; i < body.images.length; i++) {
+      await this.postsService.createPostImage({
+        post,
+        order: i,
+        path: body.images[i],
+        type: ImageModelType.POST_IMAGE,
+      });
+    }
+
+    return this.postsService.getPostById((await post).id);
+
     // const authorId = req.user.id;
-    return this.postsService.createPost(userId, body);
     // return this.postsService.createPost(title, authorId, content);
   }
+
   /**
    * 4) PUT /posts/:id
    *  id에 해당하는 post를 업데이트 하거나 새로 생성

@@ -23,28 +23,33 @@ import {
   TEMP_FOLDER_PATH,
 } from 'src/common/const/path.const';
 import { promises } from 'fs';
+import { CreatePostImageDto } from './image/dto/create-image.dto';
+import { ImageModel } from 'src/common/entity/image.entity';
+import { DEFAULT_POST_FIND_OPTIONS } from './const/default-post-find-options.const';
 
-export interface PostModel {
-  id: number;
-  author: string;
-  title: string;
-  content: string;
-  likeCount: number;
-  commentCount: number;
-}
+// export interface PostModel {
+//   id: number;
+//   author: string;
+//   title: string;
+//   content: string;
+//   likeCount: number;
+//   commentCount: number;
+// }
 
 @Injectable()
 export class PostsService {
   constructor(
     @InjectRepository(PostsModel)
     private readonly postsRepository: Repository<PostsModel>,
+    @InjectRepository(ImageModel)
+    private readonly imageRepository: Repository<ImageModel>,
     private readonly commonService: CommonService,
     private readonly configService: ConfigService,
   ) {}
 
   async getAllPosts() {
     return await this.postsRepository.find({
-      relations: ['author'],
+      ...DEFAULT_POST_FIND_OPTIONS,
     });
   }
 
@@ -53,6 +58,7 @@ export class PostsService {
       await this.createPost(userId, {
         title: `post subject ${i}`,
         content: `post Content ${i}`,
+        images: [],
       });
     }
   }
@@ -65,7 +71,8 @@ export class PostsService {
         // relations: {
         //   author: true,
         // },
-        relations: ['author'],
+        // relations: ['author', 'images'],
+        ...DEFAULT_POST_FIND_OPTIONS,
       },
       'posts',
     );
@@ -147,7 +154,7 @@ export class PostsService {
       where: {
         id,
       },
-      relations: ['author'],
+      ...DEFAULT_POST_FIND_OPTIONS,
     });
     if (!post) throw new NotFoundException();
     return post;
@@ -159,6 +166,7 @@ export class PostsService {
         id: authorId,
       },
       ...postDto,
+      images: [],
       likeCount: 0,
       commentCount: 0,
     });
@@ -168,8 +176,8 @@ export class PostsService {
     return newPost;
   }
 
-  async createPostImage(dto: CreatePostDto) {
-    const tempFilePath = join(TEMP_FOLDER_PATH, dto.image);
+  async createPostImage(dto: CreatePostImageDto) {
+    const tempFilePath = join(TEMP_FOLDER_PATH, dto.path);
 
     try {
       await promises.access(tempFilePath);
@@ -180,9 +188,13 @@ export class PostsService {
     const fileName = basename(tempFilePath);
 
     const newPath = join(POST_IMAGE_PATH, fileName);
+
+    const result = await this.imageRepository.save({
+      ...dto,
+    });
     await promises.rename(tempFilePath, newPath);
 
-    return true;
+    return result;
   }
 
   async updatePost(postId: number, postDto: UpdatePostDto) {
@@ -194,6 +206,7 @@ export class PostsService {
     const { title, content } = postDto;
 
     const post = await this.postsRepository.findOne({
+      ...DEFAULT_POST_FIND_OPTIONS,
       where: {
         id: postId,
       },
