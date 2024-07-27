@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   // DefaultValuePipe,
@@ -12,6 +13,7 @@ import {
   Put,
   Query,
   UploadedFile,
+  UseFilters,
   // Request,
   UseGuards,
   UseInterceptors,
@@ -30,6 +32,7 @@ import { PostsImagesService } from './image/images.service';
 import { LogInterceptor } from 'src/common/interceptor/log.intercepter';
 import { TransactionInterceptor } from 'src/common/interceptor/transaction.intercepter';
 import { QueryRunner } from 'src/common/decorator/query-runner.decorator';
+import { HttpExceptionFilter } from 'src/common/exception-filter/http.exception-filter';
 // import { UsersModel } from 'src/users/entites/users.entity';
 
 @Controller('posts')
@@ -45,7 +48,9 @@ export class PostsController {
    */
   @Get()
   @UseInterceptors(LogInterceptor)
+  // @UseFilters(HttpExceptionFilter)
   getPosts(@Query() query: PaginatePostDto) {
+    // return new BadRequestException('error...');
     return this.postsService.paginatePosts(query);
     // return this.postsService.getAllPosts();
   }
