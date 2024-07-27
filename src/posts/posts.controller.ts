@@ -25,9 +25,11 @@ import { PaginatePostDto } from './dto/paginate_post.dto';
 import { UsersModel } from 'src/users/entites/users.entity';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ImageModelType } from 'src/common/entity/image.entity';
-import { DataSource } from 'typeorm';
+import { DataSource, QueryRunner as QR } from 'typeorm';
 import { PostsImagesService } from './image/images.service';
 import { LogInterceptor } from 'src/common/interceptor/log.intercepter';
+import { TransactionInterceptor } from 'src/common/interceptor/transaction.intercepter';
+import { QueryRunner } from 'src/common/decorator/query-runner.decorator';
 // import { UsersModel } from 'src/users/entites/users.entity';
 
 @Controller('posts')
@@ -72,6 +74,7 @@ export class PostsController {
    */
   @Post()
   @UseGuards(AccessTokenGuard)
+  @UseInterceptors(TransactionInterceptor)
   // @UseInterceptors(FileInterceptor('image'))
   async postPost(
     // @Request() req: any, //User decorator를 사용하므로 더 이상 필요없다
@@ -80,44 +83,30 @@ export class PostsController {
 
     // @Body('authorId') authorId: number,
     @Body() body: CreatePostDto,
+    @QueryRunner() qr: QR,
     // @Body('title') title: string,
     // @Body('content') content: string,
     // @Body('isPublic', new DefaultValuePipe(true)) isPublic: boolean, // DefaultValue연습용
     // @UploadedFile() file?: Express.Multer.File,
   ) {
-    const qr = this.dataSource.createQueryRunner();
+    const post = await this.postsService.createPost(userId, body, qr);
 
-    await qr.connect();
-    await qr.startTransaction();
+    // 아래는 테스트 용 - 디비에 저장하지 않는다. transation에 의해.
+    // throw new InternalServerErrorException('error 가 났습니다.');
 
-    try {
-      const post = await this.postsService.createPost(userId, body, qr);
-
-      // 아래는 테스트 용 - 디비에 저장하지 않는다. transation에 의해.
-      // throw new InternalServerErrorException('error 가 났습니다.');
-
-      for (let i = 0; i < body.images.length; i++) {
-        await this.postsImagesService.createPostImage(
-          {
-            post,
-            order: i,
-            path: body.images[i],
-            type: ImageModelType.POST_IMAGE,
-          },
-          qr,
-        );
-      }
-
-      await qr.commitTransaction();
-      await qr.release();
-
-      return this.postsService.getPostById((await post).id);
-    } catch (error) {
-      await qr.rollbackTransaction();
-      await qr.release();
-
-      throw new InternalServerErrorException('error 가 났습니다.');
+    for (let i = 0; i < body.images.length; i++) {
+      await this.postsImagesService.createPostImage(
+        {
+          post,
+          order: i,
+          path: body.images[i],
+          type: ImageModelType.POST_IMAGE,
+        },
+        qr,
+      );
     }
+
+    return this.postsService.getPostById(post.id, qr);
 
     // const authorId = req.user.id;
     // return this.postsService.createPost(title, authorId, content);
